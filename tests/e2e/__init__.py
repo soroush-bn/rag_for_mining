@@ -1,0 +1,1 @@
+# Empty init file to mark tests/e2e as a package
