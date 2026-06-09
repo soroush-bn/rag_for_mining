@@ -16,7 +16,10 @@ class IngestionInteractor:
 
     async def ingest_file(self, file_name: str, file_bytes: bytes, modality: str) -> dict[str, Any]:
    
-        temp_dir = "./downloads"
+        # AWS Lambda only allows writing to /tmp
+        is_lambda = os.environ.get("AWS_LAMBDA_FUNCTION_NAME") is not None
+        temp_dir = "/tmp/downloads" if is_lambda else "./downloads"
+        
         os.makedirs(temp_dir, exist_ok=True)
         temp_path = os.path.join(temp_dir, file_name)
 
