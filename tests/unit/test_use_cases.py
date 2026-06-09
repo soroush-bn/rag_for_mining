@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 from app.use_cases.qa_interactor import QAInteractor
 from app.domain.models import QueryRequest
 
@@ -32,14 +32,17 @@ async def test_ingestion_interactor_processes_pdf(monkeypatch):
     
     # Mock LLM service methods
     mock_llm_service.load_and_extract_text_from_pdf.return_value = ["Page 1 content"]
-    mock_llm_service.generate_text_summaries.return_value = (["Summary 1"], [])
+    # Use AsyncMock for async methods
+    mock_llm_service.generate_text_summaries = AsyncMock(return_value=(["Summary 1"], []))
     
     # Instantiate interactor
     from app.use_cases.ingestion_interactor import IngestionInteractor
     interactor = IngestionInteractor(mock_vector_store, mock_llm_service)
     
+    # Mock os.makedirs and os.remove to avoid file system interaction
     monkeypatch.setattr("os.makedirs", lambda *args, **kwargs: None)
     monkeypatch.setattr("os.remove", lambda *args, **kwargs: None)
+    # Mock 'open' to avoid writing real files
     from unittest.mock import mock_open
     monkeypatch.setattr("builtins.open", mock_open())
 
