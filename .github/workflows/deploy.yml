@@ -29,6 +29,9 @@ jobs:
           pip install pytest httpx
 
       - name: Run tests
+        env:
+          PYTHONPATH: .
+          GOOGLE_APPLICATION_CREDENTIALS: ""
         run: |
           pytest
 
