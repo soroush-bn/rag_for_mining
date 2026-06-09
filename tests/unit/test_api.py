@@ -1,8 +1,20 @@
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import MagicMock
 from app.main import app
+from app.dependencies import get_qa_interactor, get_ingestion_interactor
 
 client = TestClient(app)
+
+# Override dependencies to use mocks during API tests
+@pytest.fixture(autouse=True)
+def mock_api_dependencies():
+    mock_qa = MagicMock()
+    mock_ingest = MagicMock()
+    app.dependency_overrides[get_qa_interactor] = lambda: mock_qa
+    app.dependency_overrides[get_ingestion_interactor] = lambda: mock_ingest
+    yield
+    app.dependency_overrides = {}
 
 def test_health_check():
     response = client.get("/health")
@@ -23,10 +35,7 @@ def test_ingest_endpoint_accept_pdf():
     files = {"file": ("test.pdf", file_content, "application/pdf")}
     data = {"modality": "pdf"}
     
-    # We use the test client to simulate the upload
     response = client.post("/api/v1/rag/ingest", files=files, data=data)
     
-    # We expect a success or a 500 if the real services fail during initialization,
-    # but for a unit test of the API layer, we focus on the request handling.
-    # In a fully mocked environment, this would be a 200.
-    assert response.status_code in [200, 500] 
+    # With mocked dependencies, this should now be a 200
+    assert response.status_code == 200
