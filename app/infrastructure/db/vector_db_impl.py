@@ -1,5 +1,6 @@
 from typing import List, Optional, Any
 import uuid
+import os
 import vertexai
 from app.common.constants import PROJECT_ID, REGION
 from app.domain.interfaces.vector_store import VectorStoreInterface
@@ -18,10 +19,15 @@ class ChromaDBImpl(VectorStoreInterface):
         vertexai.init(project=PROJECT_ID, location=REGION)
         
         embeddings = VertexAIEmbeddings(model_name="gemini-embedding-001", project=PROJECT_ID, location=REGION)
+        
+        # AWS Lambda only allows writing to /tmp
+        is_lambda = os.environ.get("AWS_LAMBDA_FUNCTION_NAME") is not None
+        persist_dir = "/tmp/chroma_db" if is_lambda else "./chroma_db"
+        
         self.vectorstore = Chroma(
             collection_name="mm_rag_cj_blog",
             embedding_function=embeddings,
-            persist_directory="./chroma_db"
+            persist_directory=persist_dir
         )
         self.store = InMemoryStore()
         self.id_key = "doc_id"

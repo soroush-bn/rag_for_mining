@@ -12,6 +12,12 @@ COPY requirements.txt .
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy the Google Cloud credentials file
+COPY credentials.json .
+
+# Set the environment variable for Google Cloud authentication
+ENV GOOGLE_APPLICATION_CREDENTIALS="/app/credentials.json"
+
 # Copy the rest of the application code
 # We copy the app directory specifically to match the app.main import
 COPY app/ ./app/
