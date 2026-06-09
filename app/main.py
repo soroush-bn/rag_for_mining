@@ -13,13 +13,12 @@ def create_app() -> FastAPI:
         version="1.0.0"
     )
 
-    # Configure CORS to allow your frontend to connect to this API
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Allows all origins. For production, replace with your frontend URL.
+        allow_origins=["*"],  
         allow_credentials=True,
-        allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
-        allow_headers=["*"],  # Allows all headers
+        allow_methods=["*"],  
+        allow_headers=["*"],  
     )
 
     app.include_router(rag_router)
