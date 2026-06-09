@@ -148,3 +148,7 @@ Thumbs.db
 
 # User specific requests
 *.pdf
+
+*.ipynb
+*.json
+chroma_db/
