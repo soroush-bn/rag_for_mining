@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from functools import lru_cache
 from fastapi import Depends
-from app.infrastructure.db.vector_db_impl import ChromaDBImpl
+from app.infrastructure.db.pinecone_db_impl import PineconeDBImpl
 from app.infrastructure.services.multimodal_llm_impl import GeminiMultimodalLLMImpl
 from app.use_cases.ingestion_interactor import IngestionInteractor
 from app.use_cases.qa_interactor import QAInteractor
@@ -13,7 +13,7 @@ load_dotenv()
 
 @lru_cache() #singleton
 def get_vector_store() -> VectorStoreInterface:
-    return ChromaDBImpl()
+    return PineconeDBImpl()
 
 @lru_cache()
 def get_llm_service() -> MultimodalLLMInterface:
