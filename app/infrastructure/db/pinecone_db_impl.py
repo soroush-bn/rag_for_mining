@@ -29,32 +29,41 @@ class PineconeDBImpl(VectorStoreInterface):
         )
 
     def get_retriever(self) -> Any:
+        # Note: We use the search results manually to avoid retriever issues on Lambda
         return self.vectorstore.as_retriever()
 
     async def add_documents(self, documents: List[DomainDocument]) -> None:
-        # Implementation for adding domain documents if needed
         pass
 
     async def search(self, query: str, top_k: int) -> List[DomainDocument]:
         return self.vectorstore.similarity_search(query, k=top_k)
 
     async def search_multimodal(self, query: str, image_features: Optional[List[float]], top_k: int) -> List[DomainDocument]:
-        # Pinecone multimodal search logic would go here
         pass
     
     def add_summaries_and_docs(self, doc_summaries: List[str], doc_contents: List[str], batch_size: int = 100):
         """
-        Adds summaries to Pinecone. 
+        Manually upserting to Pinecone to avoid the Multiprocessing/SemLock crash on AWS Lambda.
         """
         for i in range(0, len(doc_summaries), batch_size):
-            batch_summaries = doc_summaries[i:i + batch_size]
-            batch_contents = doc_contents[i:i + batch_size]
+            batch_summaries = doc_summaries[i : i + batch_size]
+            batch_contents = doc_contents[i : i + batch_size]
             
-            docs = [
-                LangchainDocument(
-                    page_content=s, 
-                    metadata={"full_text": batch_contents[j], "id": str(uuid.uuid4())}
-                )
-                for j, s in enumerate(batch_summaries)
-            ]
-            self.vectorstore.add_documents(docs)
+            # 1. Embed the text manually (synchronous)
+            embeddings = self.embeddings.embed_documents(batch_summaries)
+            
+            # 2. Prepare the vectors for Pinecone
+            vectors = []
+            for j, (summary, embedding) in enumerate(zip(batch_summaries, embeddings)):
+                vectors.append({
+                    "id": str(uuid.uuid4()),
+                    "values": embedding,
+                    "metadata": {
+                        "text": summary,      # 'text' is the default key used by LangChain for page_content
+                        "full_text": batch_contents[j]
+                    }
+                })
+            
+            # 3. Upsert directly to the index using the underlying client (sync mode)
+            # This avoids the ThreadPool that crashes on Lambda
+            self.vectorstore._index.upsert(vectors=vectors)
