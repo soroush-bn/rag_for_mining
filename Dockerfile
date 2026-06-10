@@ -18,6 +18,14 @@ COPY credentials.json .
 # Set the environment variable for Google Cloud authentication
 ENV GOOGLE_APPLICATION_CREDENTIALS="/app/credentials.json"
 
+# Accept Pinecone credentials as build arguments
+ARG PINECONE_API_KEY
+ARG PINECONE_INDEX_NAME
+
+# Set Pinecone environment variables
+ENV PINECONE_API_KEY=$PINECONE_API_KEY
+ENV PINECONE_INDEX_NAME=$PINECONE_INDEX_NAME
+
 # Copy the rest of the application code
 # We copy the app directory specifically to match the app.main import
 COPY app/ ./app/
